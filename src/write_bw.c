@@ -64,8 +64,6 @@ int main(int argc, char *argv[])
 	user_param.tst     = BW;
 	strncpy(user_param.version, VERSION, sizeof(user_param.version));
 
-	printf("a\n");
-
 	/* Configure the parameters values according to user arguments or default values. */
 	ret_parser = parser(&user_param,argv,argc);
 	if (ret_parser) {
@@ -118,8 +116,6 @@ int main(int argc, char *argv[])
 	sleep(1);
 	exchange_versions(&user_comm, &user_param);
 
-	printf("b\n");
-
 	check_sys_data(&user_comm, &user_param);
 
 	/* See if MTU and link type are valid and supported. */
@@ -153,15 +149,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("c\n");
-
 	/* Set up the Connection. */
 	if (set_up_connection(&ctx,&user_param,my_dest)) {
 		fprintf(stderr," Unable to set up socket connection\n");
 		return FAILURE;
 	}
-
-	printf("d\n");
 
 	/* Print basic test information. */
 	ctx_print_test_info(&user_param);
@@ -171,7 +163,6 @@ int main(int argc, char *argv[])
 	for (i=0; i < user_param.num_of_qps; i++)
 		ctx_print_pingpong_data(&my_dest[i],&user_comm);
 
-	printf("e\n");
 
 	user_comm.rdma_params->side = REMOTE;
 	for (i=0; i < user_param.num_of_qps; i++) {
@@ -199,8 +190,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("f\n");
-
 	/* An additional handshake is required after moving qp to RTR. */
 	if (ctx_hand_shake(&user_comm,&my_dest[0],&rem_dest[0])) {
 		fprintf(stderr," Failed to exchange data between server and clients\n");
@@ -219,11 +208,9 @@ int main(int argc, char *argv[])
 
 		printf((user_param.cpu_util_data.enable ? RESULT_EXT_CPU_UTIL : RESULT_EXT));
 	}
-	return FAILURE;
 
 	/* For half duplex tests, server just waits for client to exit */
 	if (user_param.machine == SERVER && !user_param.duplex) {
-		printf("g\n");
 
 		if (ctx_hand_shake(&user_comm,&my_dest[0],&rem_dest[0])) {
 			fprintf(stderr," Failed to exchange data between server and clients\n");
@@ -259,7 +246,6 @@ int main(int argc, char *argv[])
 	}
 
 	if (user_param.test_method == RUN_ALL) {
-		printf("h\n");
 
 		for (i = 1; i < 24 ; ++i) {
 
@@ -321,7 +307,6 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		// I am here
 		print_report_bw(&user_param,&my_bw_rep);
 
 		if (user_param.duplex) {
@@ -360,7 +345,6 @@ int main(int argc, char *argv[])
 		else
 			printf(RESULT_LINE);
 	}
-	printf("i\n");
 
 	/* For half duplex tests, server just waits for client to exit */
 	if (user_param.machine == CLIENT && !user_param.duplex) {
