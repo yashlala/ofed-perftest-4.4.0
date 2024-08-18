@@ -3598,6 +3598,72 @@ static inline int post_send_method(struct pingpong_context *ctx, int index,
 /******************************************************************************
  *
  ******************************************************************************/
+
+static int capture_ethtool_pre(VerbType verb)
+{
+	const char *cmd;
+	int err;
+
+	if (verb != READ && verb != WRITE)
+		 return SUCCESS;
+
+	if (verb == READ) {
+		cmd = "sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/read.tx.pre";
+	} else {
+		cmd = "sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/write.tx.pre";
+	}
+	err = system(cmd);
+	if (err) {
+		perror("Failed: Couldn't capture rx!");
+		return FAILURE;
+	}
+
+	if (verb == READ) {
+		cmd = "sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/read.rx.pre";
+	} else {
+		cmd = "sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/write.rx.pre";
+	}
+	err = system(cmd);
+	if (err) {
+		perror("Failed: Couldn't capture rx!");
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
+static int capture_ethtool_post(VerbType verb)
+{
+	const char *cmd;
+	int err;
+
+	if (verb != READ && verb != WRITE)
+		 return SUCCESS;
+
+	if (verb == READ) {
+		cmd = "sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/read.tx.post";
+	} else {
+		cmd = "sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/write.tx.post";
+	}
+	err = system(cmd);
+	if (err) {
+		perror("Failed: Couldn't capture rx!");
+		return FAILURE;
+	}
+
+	if (verb == READ) {
+		cmd = "sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/read.rx.post";
+	} else {
+		cmd = "sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/write.rx.post";
+	}
+	err = system(cmd);
+	if (err) {
+		perror("Failed: Couldn't capture rx!");
+		return FAILURE;
+	}
+	return SUCCESS;
+}
+
+
 int run_iter_bw(struct pingpong_context *ctx,struct perftest_parameters *user_param)
 {
 	uint64_t           	totscnt = 0;
@@ -3689,18 +3755,8 @@ int run_iter_bw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 		gap_cycles = cpu_mhz * gap_time;
 	}
 
-	err = system("sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/tx.pre");
-	if (err) {
-		fprintf(stderr, "Failed: Couldn't capture tx into /tmp/tx.pre");
-		return_value = FAILURE;
-		goto cleaning;
-	}
-	err = system("sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/rx.pre");
-	if (err) {
-		fprintf(stderr, "Failed: Couldn't capture rx into /tmp/rx.pre");
-		return_value = FAILURE;
-		goto cleaning;
-	}
+	if (capture_ethtool_pre(user_param->verb))
+		 goto cleaning;
 
 	/* main loop for posting */
 	while (totscnt < tot_iters  || totccnt < tot_iters ||
@@ -3925,18 +3981,8 @@ int run_iter_bw(struct pingpong_context *ctx,struct perftest_parameters *user_pa
 	if (user_param->noPeak == ON && user_param->test_type == ITERATIONS)
 		user_param->tcompleted[0] = get_cycles();
 
-	err = system("sudo ethtool -S enp0s9f0 | grep tx_bytes_phy | awk '{print $2}' > /tmp/tx.post");
-	if (err) {
-		fprintf(stderr, "Failed: Couldn't capture tx into /tmp/tx.post");
-		return_value = FAILURE;
-		goto cleaning;
-	}
-	err = system("sudo ethtool -S enp0s9f0 | grep rx_bytes_phy | awk '{print $2}' > /tmp/rx.post");
-	if (err) {
-		fprintf(stderr, "Failed: Couldn't capture rx into /tmp/rx.post");
-		return_value = FAILURE;
-		goto cleaning;
-	}
+	if (capture_ethtool_post(user_param->verb))
+		 goto cleaning;
 
 cleaning:
 
